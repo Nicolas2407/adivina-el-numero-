@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Temperatura Secreta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg-dark: #0b0f1a;
+            --neon-blue: #00eaff;
+            --hot: #ff004c;
+            --warm: #ffb703;
+            --cold: #00b4ff;
+            --win: #00ff9c;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #10162f, #05070f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            border-radius: 16px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 4px solid var(--neon-blue);
+            box-shadow: 0 0 25px rgba(0, 234, 255, 0.4);
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .timer {
+            font-size: 1.4rem;
+            margin: 15px 0;
+            color: var(--neon-blue);
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--neon-blue);
+            color: #000;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            min-height: 32px;
+        }
+
+        .history {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+
+        .hot {
+            border-color: var(--hot);
+            box-shadow: 0 0 30px var(--hot);
+        }
+
+        .warm {
+            border-color: var(--warm);
+            box-shadow: 0 0 30px var(--warm);
+        }
+
+        .cold {
+            border-color: var(--cold);
+            box-shadow: 0 0 30px var(--cold);
+        }
+
+        .win {
+            border-color: var(--win);
+            box-shadow: 0 0 40px var(--win);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.03); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="game-container" id="game">
+        <h1>🎯 Adivina el Número</h1>
+        <div class="timer">⏱️ Tiempo: <span id="time">30</span>s</div>
+
+        <input type="number" id="guess" placeholder="Ingresa un número (1 - 100)" min="1" max="100">
+        <button id="btn">Probar</button>
+
+        <div class="message" id="message"></div>
+        <div class="history" id="history">Intentos previos: —</div>
+    </div>
+
+    <script>
+        const secretNumber = Math.floor(Math.random() * 100) + 1;
+        let timeLeft = 30;
+        let gameOver = false;
+        const attempts = [];
+
+        const timeEl = document.getElementById("time");
+        const input = document.getElementById("guess");
+        const btn = document.getElementById("btn");
+        const msg = document.getElementById("message");
+        const history = document.getElementById("history");
+        const game = document.getElementById("game");
+
+ 
+        const timer = setInterval(() => {
+            if (gameOver) return;
+
+            timeLeft--;
+            timeEl.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame(false, "¡Tiempo Agotado! ☠️<br>El número era: " + secretNumber);
+            }
+        }, 1000);
+
+  
+        function checkGuess() {
+            if (gameOver) return;
+
+            const value = Number(input.value);
+            if (!value || value < 1 || value > 100) return;
+
+            const distance = Math.abs(secretNumber - value);
+
+            if (distance === 0) {
+                endGame(true, "🏆 ¡VICTORIA! Adivinaste el número");
+                return;
+            }
+
+            attempts.push(value);
+            history.textContent = "Intentos previos: " + attempts.join(" - ");
+
+            game.classList.remove("hot", "warm", "cold");
+
+            if (distance <= 5) {
+                game.classList.add("hot");
+                msg.textContent = "🔥 CALIENTE — ¡Muy cerca!";
+            } else if (distance <= 15) {
+                game.classList.add("warm");
+                msg.textContent = "🟡 TIBIO — Vas bien...";
+            } else {
+                game.classList.add("cold");
+                msg.textContent = "❄️ FRÍO — Estás lejos";
+            }
+
+            input.value = "";
+            input.focus();
+        }
+
+        function endGame(win, text) {
+            gameOver = true;
+            clearInterval(timer);
+
+            msg.innerHTML = text;
+            btn.disabled = true;
+            input.disabled = true;
+
+            game.classList.remove("hot", "warm", "cold");
+
+            if (win) {
+                game.classList.add("win");
+            }
+        }
+
+        btn.addEventListener("click", checkGuess);
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") checkGuess();
+        });
+    </script>
+
+</body>
+</html>
